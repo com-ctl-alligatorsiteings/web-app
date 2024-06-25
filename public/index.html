@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alligator Sightings</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+      (g => {
+        var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => {
+          await (a = m.createElement("script"));
+          e.set("libraries", [...r] + "");
+          for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+          e.set("callback", c + ".maps." + q);
+          a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+          d[q] = f;
+          a.onerror = () => h = n(Error(p + " could not load."));
+          a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+          m.head.append(a);
+        }));
+        d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
+      })({
+        key: "AIzaSyDz4oi1qr71g5KNJRwdvlpfvWIWKbMktT4",
+        v: "weekly",
+        // Add other bootstrap parameters as needed, using camel case.
+      });
+    </script>
+</head>
+<body>
+    <div id="app">
+        <div id="login-container" class="login-modal" style="display: none;">
+            <h2 class="modal-header">Login To See Alligator Site-ings On A Map</h2>
+            <br>
+            <input class="input" type="email" id="login-email" placeholder="Enter Email To Login">
+            <br>
+            <div class="password-container">
+                <input class="input" type="password" id="login-password" placeholder="Enter Password To Login">
+                <span class="password-toggle" onclick="togglePasswordVisibility('login-password')">👁️</span>
+            </div>
+            <br>
+            <button id="login-button" class="button">Submit To Login</button>
+            <br>
+            <button id="go-to-register" class="button">Register</button>
+            <br>
+            <p class="modal-paragraph">
+                Welcome To The Alligator Site-ing (Sighting, Site)Map
+                Do Not Use This Map For Illegal Activities! This Map Is Meant To Be Used To Avoid Alligators Or Maybe Perchance See One!
+                Please Use This App Responsibly! By Using This App You Agree To Claim Responsibility For Anything That May Happen Because Of Using This App. 
+                The App Or Website Cannot Be Held Responsible For Anything You May See On This App Or Anything You Don't See On This App!
+                The Website Or App Reserves The Right To Collect Users Data, That Data Includes, But Is Not Limited To "Photos, Videos, Email Addresses and User Location At Time Of Posting"
+            </p>
+        </div>
+
+        <div id="register-container" class="register-modal" style="display: none;">
+            <h2 class="modal-header">Register To Post Alligators</h2>
+            <input class="input" type="email" id="register-email" placeholder="Enter Email To Sign Up">
+            <br>
+            <div class="password-container">
+                <input class="input" type="password" id="register-password" placeholder="Create A Safe Password">
+                <span class="password-toggle" onclick="togglePasswordVisibility('register-password')">👁️</span>
+            </div>
+            <br>
+            <div class="password-container">
+                <input class="input" type="password" id="confirm-password" placeholder="Confirm Password">
+                <span class="password-toggle" onclick="togglePasswordVisibility('confirm-password')">👁️</span>
+            </div>
+            <br>
+            <button id="register-button" class="button">Submit To Register</button>
+            <br>
+            <button id="go-to-login" class="button">Login</button> 
+        </div>
+
+        <div id="main-container" class="main-container" style="display: flex;">
+            <nav>
+                <div id="hamburger-menu" class="hamburger-menu" onclick="toggleNavMenu()">
+                    ☰
+                </div>
+                <div id="nav-menu" class="nav-menu" style="display: none;">
+                    <div id="hamburger-menu" class="hamburger-menu-back" onclick="toggleNavMenu()">
+                        ⬅️
+                    </div>
+                    <button id="add-sighting-button" class="nav-button">Add Sighting</button>
+                    <button id="toggle-view-button" class="nav-button">Show List View</button>
+                    <button id="my-posts-button" class="nav-button">My Posts</button>
+                    <button id="settings-button" class="nav-button">Settings</button>
+                </div>
+            </nav>
+            <div id="map-container" class="map-container" style="width: 100%; height: 500px;"></div>
+            <div id="sightings-list" class="sightings-list" style="display: flex;"></div>
+        </div>
+
+        <div id="add-sighting-modal" class="add-sighting-modal">
+            <span class="close" onclick="hideElement(addSightingModal)">⬅️</span>
+            <h2 class="modal-header">Add Sighting</h2>
+            <textarea class="input" id="description-input" placeholder="Description"></textarea>
+            <br>
+            <button class="button" id="use-current-location-button">Use Current Location</button>
+            <div>
+                <button class="button" id="upload-image-button">Upload Image</button>
+            </div>
+            <br>
+            <button class="button" id="submit-sighting-button">Submit</button>
+            <br>
+            <button class="button" id="cancel-button">Cancel</button>
+        </div>
+        
+        <div id="settings-modal" class="settings-modal">
+            <span class="close" onclick="hideElement(settingsModal)">⬅️</span>
+            <h2 class="modal-header">Settings</h2>
+            <div class="modal-paragraph">
+                <span class="info-circle" title="Set the radius in miles within which you want to receive notifications about alligator sightings.">ℹ️</span>
+                <br>
+                <label for="radius-input">Set the radius in miles within which you want to receive notifications about alligator sightings:</label>
+                <br>
+                <input class="input" type="range" id="radius-input" name="radius-input" min="0.1" max="400" step="0.1" value="0.1">
+                <input class="input" type="number" id="radius-value-input" min="0.1" max="400" step="0.1" value="0.1">
+            </div>
+            <br>
+            <div class="modal-paragraph">
+                <span class="info-circle" title="Enable background location checking to receive notifications about alligator sightings within the set radius even when the app is not open.">ℹ️</span>
+                <br>
+                <label for="background-location-check-input">Enable background location checking to receive notifications about alligator sightings within the set radius even when the app is not open:</label>
+                <br>
+                <label class="switch">
+                    <input type="checkbox" id="background-location-check-input" name="background-location-check-input">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <br>
+            <button class="button" id="delete-account-button">Delete Account</button>
+            <br>
+            <button class="button" id="reset-password-button">Reset Password</button>
+            <br>
+            <button class="button" id="sign-out-button">Sign Out</button>
+            <br>
+            <button class="button" id="save-settings-button">Save Settings</button>
+        </div>
+
+        <div id="nearby-listing-modal" class="nearby-listing-modal">
+            <span class="close" id="nearby-listing-close-button">←</span>
+            <h2>Nearby Listings</h2>
+            <div id="nearby-listings"></div>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
