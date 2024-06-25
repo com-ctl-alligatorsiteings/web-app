@@ -1,14 +1,13 @@
-import { googleMapsApiKey } from './config.js';
-import { loadSightings, loadNearbySightings } from './sightings.js';
+let map;
+let currentLocation = null;
 
-export let map;
-export let currentLocation = null;
+async function initMap() {
+    await google.maps.importLibrary("marker");
 
-export function initMap() {
     map = new google.maps.Map(document.getElementById('map-container'), {
         center: { lat: 20.773, lng: -156.01 },
         zoom: 12,
-        mapId: 'YOUR_MAP_ID', // Replace with your actual map ID
+        mapId: '4f505fee87ba6a0b', // Replace with your actual map ID
     });
 
     map.addListener('click', (event) => {
@@ -17,6 +16,7 @@ export function initMap() {
         loadSightings();
     });
 
+    // Attempt to get the user's current location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             position => {
@@ -32,6 +32,7 @@ export function initMap() {
             },
             error => {
                 console.error('Error getting location: ', error);
+                // Fallback center if user denies location access or there's an error
                 const fallbackCenter = { lat: 20.773, lng: -156.01 };
                 map.setCenter(fallbackCenter);
                 map.setZoom(12);
@@ -39,24 +40,51 @@ export function initMap() {
         );
     } else {
         console.error('Geolocation is not supported by this browser.');
+        // Fallback center if geolocation is not supported
         const fallbackCenter = { lat: 20.773, lng: -156.01 };
         map.setCenter(fallbackCenter);
         map.setZoom(12);
     }
 }
 
-export function addUserLocationMarker(coordinates) {
-    const markerElement = document.createElement('div');
-    markerElement.className = 'pulsating-marker';
+function addUserLocationMarker(coordinates) {
+    class PulsatingMarker extends google.maps.OverlayView {
+        constructor(position) {
+            super();
+            this.position = position;
+            this.div = null;
+        }
 
-    new google.maps.marker.AdvancedMarkerElement({
-        position: coordinates,
-        map: map,
-        content: markerElement
-    });
+        onAdd() {
+            this.div = document.createElement('div');
+            this.div.className = 'pulsating-marker';
+            const panes = this.getPanes();
+            panes.overlayLayer.appendChild(this.div);
+        }
+
+        draw() {
+            const overlayProjection = this.getProjection();
+            const position = overlayProjection.fromLatLngToDivPixel(this.position);
+            const div = this.div;
+            if (div) {
+                div.style.left = position.x + 'px';
+                div.style.top = position.y + 'px';
+            }
+        }
+
+        onRemove() {
+            if (this.div) {
+                this.div.parentNode.removeChild(this.div);
+                this.div = null;
+            }
+        }
+    }
+
+    const marker = new PulsatingMarker(new google.maps.LatLng(coordinates.lat, coordinates.lng));
+    marker.setMap(map);
 }
 
-export function addSightingMarker(coordinates) {
+function addSightingMarker(coordinates) {
     const markerElement = document.createElement('div');
     markerElement.className = 'custom-marker';
     markerElement.innerHTML = '🐊';
@@ -68,7 +96,7 @@ export function addSightingMarker(coordinates) {
     });
 }
 
-export function centerMap(lat, lon) {
+function centerMap(lat, lon) {
     const coordinates = { lat, lng: lon };
     map.setCenter(coordinates);
     map.setZoom(13);

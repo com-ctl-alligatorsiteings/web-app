@@ -1,3 +1,4 @@
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCpT_uutermdqFY1IOZ5GVyyDYDPYpbkgQ",
     authDomain: "alligator-site-ings.firebaseapp.com",
@@ -9,6 +10,6 @@ const firebaseConfig = {
 };
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-export const auth = firebase.auth();
-export const db = firebase.firestore();
-export const storage = firebase.storage();
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
