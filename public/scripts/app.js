@@ -1,29 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const app = document.getElementById('app');
-
-    const mainContainerHTML = `
-        <div id="main-container" class="main-container" style="display: none;">
-            <nav>
-                <div id="hamburger-menu" class="hamburger-menu" onclick="toggleNavMenu()">
-                    ☰
-                </div>
-                <div id="nav-menu" class="nav-menu" style="display: none;">
-                    <div id="hamburger-menu-back" class="hamburger-menu-back" onclick="toggleNavMenu()">
-                        ⬅
-                    </div>
-                    <button id="add-sighting-button" class="nav-button">Add Sighting</button>
-                    <button id="toggle-view-button" class="nav-button">Show List View</button>
-                    <button id="my-posts-button" class="nav-button">My Posts</button>
-                    <button id="settings-button" class="nav-button">Settings</button>
-                </div>
-            </nav>
-            <div id="map-container" class="map-container" style="width: 100%; height: 500px;"></div>
-            <div id="sightings-list" class="sightings-list" style="display: flex;"></div>
-        </div>
-    `;
-
-    app.insertAdjacentHTML('beforeend', mainContainerHTML);
-
+    loadStylesheet('scripts/styles.css');
+    loadScript('scripts/firebaseConfig.js', checkAuth);
     loadScript('scripts/login.js');
     loadScript('scripts/register.js');
     loadScript('scripts/addSighting.js');
@@ -31,6 +8,41 @@ document.addEventListener('DOMContentLoaded', () => {
     loadScript('scripts/settings/deleteAccount.js');
     loadScript('scripts/settings/resetPassword.js');
     loadScript('scripts/settings/signOut.js');
+
+    function loadScript(url, callback) {
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = true;
+        script.onload = callback;
+        document.head.appendChild(script);
+    }
+
+    function loadStylesheet(url) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = url;
+        document.head.appendChild(link);
+    }
+
+    function checkAuth() {
+        loadScript('scripts/auth.js', () => {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    showMainContainer();
+                } else {
+                    showLogin();
+                }
+            });
+        });
+    }
+
+    function showMainContainer() {
+        loadScript('scripts/mainContainer.js');
+    }
+
+    function showLogin() {
+        loadScript('scripts/login.js');
+    }
 
     let map;
     let currentLocation = null;

@@ -1,79 +1,100 @@
-(function(g) {
-    var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
-    b = b[c] || (b[c] = {});
-    var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => {
-      await (a = m.createElement("script"));
-      e.set("libraries", [...r] + "");
-      for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-      e.set("callback", c + ".maps." + q);
-      a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-      d[q] = f;
-      a.onerror = () => h = n(Error(p + " could not load."));
-      a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-      m.head.append(a);
-    }));
-    d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
-})({
-    key: "AIzaSyDz4oi1qr71g5KNJRwdvlpfvWIWKbMktT4",
-    v: "weekly",
-    // Add other bootstrap parameters as needed, using camel case.
+import 'ol/ol.css';
+import { Map, View } from 'ol';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import { fromLonLat } from 'ol/proj';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+
+// Initialize the map
+const map = new Map({
+  target: 'map-container',
+  layers: [
+    new TileLayer({
+      source: new OSM(),
+    }),
+  ],
+  view: new View({
+    center: fromLonLat([0, 0]), // Coordinates of the map center in EPSG:3857 projection
+    zoom: 2, // Initial zoom level
+  }),
 });
 
-window.initMap = function() {
-    const map = new google.maps.Map(document.getElementById('map-container'), {
-        center: { lat: 0, lng: 0 },
-        zoom: 2,
+let userMarker = null;
+let userCircle = null;
+
+function updateUserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      const pos = fromLonLat([position.coords.longitude, position.coords.latitude]);
+
+      map.getView().setCenter(pos);
+
+      if (userMarker) {
+        userMarker.getGeometry().setCoordinates(pos);
+      } else {
+        userMarker = new Feature({
+          geometry: new Point(pos),
+        });
+
+        userMarker.setStyle(
+          new Style({
+            image: new CircleStyle({
+              radius: 10,
+              fill: new Fill({
+                color: 'rgba(0, 0, 255, 0.4)',
+              }),
+            }),
+          })
+        );
+
+        const vectorSource = new VectorSource({
+          features: [userMarker],
+        });
+
+        const vectorLayer = new VectorLayer({
+          source: vectorSource,
+        });
+
+        map.addLayer(vectorLayer);
+
+        userCircle = new Feature({
+          geometry: new Point(pos),
+        });
+
+        userCircle.setStyle(
+          new Style({
+            stroke: new Stroke({
+              color: '#00f',
+              width: 1,
+            }),
+            fill: new Fill({
+              color: 'rgba(0, 0, 255, 0.2)',
+            }),
+          })
+        );
+
+        const circleVectorSource = new VectorSource({
+          features: [userCircle],
+        });
+
+        const circleVectorLayer = new VectorLayer({
+          source: circleVectorSource,
+        });
+
+        map.addLayer(circleVectorLayer);
+      }
+    }, () => {
+      console.error('Error getting location.');
     });
+  } else {
+    console.error("Browser doesn't support Geolocation");
+  }
+}
 
-    let userMarker = null;
-
-    function updateUserLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                };
-
-                map.setCenter(pos);
-
-                if (userMarker) {
-                    userMarker.setPosition(pos);
-                } else {
-                    userMarker = new google.maps.Marker({
-                        position: pos,
-                        map: map,
-                        title: 'Your Location',
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 10,
-                            fillColor: '#00f',
-                            fillOpacity: 0.4,
-                            strokeWeight: 0,
-                        },
-                        zIndex: 999,
-                    });
-
-                    const circle = new google.maps.Circle({
-                        map: map,
-                        radius: 100, // in meters
-                        fillColor: '#00f',
-                        fillOpacity: 0.2,
-                        strokeColor: '#00f',
-                        strokeOpacity: 0.6,
-                        strokeWeight: 1,
-                    });
-                    circle.bindTo('center', userMarker, 'position');
-                }
-            }, () => {
-                console.error('Error getting location.');
-            });
-        } else {
-            console.error('Browser doesn\'t support Geolocation');
-        }
-    }
-
-    // Update the user's location every 10 seconds
-    updateUserLocation();
-    setInterval(updateUserLocation, 10000);
-};
+// Update the user's location every 10 seconds
+updateUserLocation();
+setInterval(updateUserLocation, 10000);
