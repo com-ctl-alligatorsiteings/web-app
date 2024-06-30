@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #main-container {
+            display: flex;
+            height: 100%;
+        }
+        #map-container {
+            flex: 1;
+        }
+        .nav-menu {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .nav-button {
+            padding: 15px;
+            background: #444;
+            border: none;
+            color: white;
+            cursor: pointer;
+            text-align: left;
+            border-bottom: 1px solid #555;
+        }
+        .nav-button:hover {
+            background: #555;
+        }
+        .marker {
+            background-image: url('https://placekitten.com/g/30/30');
+            background-size: cover;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-container">
+        <nav class="nav-menu">
+            <button id="add-sighting-button" class="nav-button">Add Sighting</button>
+            <button id="settings-button" class="nav-button">Settings</button>
+            <button id="sign-out-button" class="nav-button">Sign Out</button>
+        </nav>
+        <div id="map-container"></div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <script type="module">
+        import { auth, db } from '../firebaseConfig.js';
+
+        mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+        const map = new mapboxgl.Map({
+            container: 'map-container',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [0, 0],
+            zoom: 2
+        });
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const coords = [position.coords.longitude, position.coords.latitude];
+                map.setCenter(coords);
+                map.setZoom(14);
+
+                new mapboxgl.Marker({
+                    element: createCustomMarker(),
+                }).setLngLat(coords).addTo(map);
+            });
+        } else {
+            console.error('Geolocation not supported');
+        }
+
+        function createCustomMarker() {
+            const marker = document.createElement('div');
+            marker.className = 'marker';
+            return marker;
+        }
+
+        document.getElementById('sign-out-button').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = '../login/index.html';
+            });
+        });
+
+        document.getElementById('add-sighting-button').addEventListener('click', () => {
+            window.location.href = '../addSighting/index.html';
+        });
+
+        document.getElementById('settings-button').addEventListener('click', () => {
+            window.location.href = '../settings/index.html';
+        });
+    </script>
+</body>
+</html>
