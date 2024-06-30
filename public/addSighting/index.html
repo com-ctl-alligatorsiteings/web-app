@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Sighting</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #add-sighting-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea, input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="add-sighting-container">
+        <h2>Add Sighting</h2>
+        <textarea id="sighting-description" placeholder="Description"></textarea>
+        <input type="file" id="sighting-photo">
+        <button id="save-sighting-button">Save</button>
+    </div>
+    <script type="module">
+        import { auth, db } from '../firebaseConfig.js';
+
+        document.getElementById('save-sighting-button').addEventListener('click', () => {
+            const description = document.getElementById('sighting-description').value;
+            const fileInput = document.getElementById('sighting-photo');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a photo');
+                return;
+            }
+
+            const storageRef = firebase.storage().ref();
+            const sightingRef = storageRef.child('sightings/' + file.name);
+            const uploadTask = sightingRef.put(file);
+
+            uploadTask.on('state_changed', null, error => {
+                console.error('Error uploading file:', error);
+            }, () => {
+                uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+                    const sighting = {
+                        description: description,
+                        photoURL: downloadURL,
+                        user: auth.currentUser.uid,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    db.collection('sightings').add(sighting).then(() => {
+                        alert('Sighting added successfully');
+                        window.location.href = '../main/index.html';
+                    }).catch(error => {
+                        console.error('Error adding sighting:', error);
+                        alert('Failed to add sighting');
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
